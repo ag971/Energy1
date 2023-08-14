@@ -17,6 +17,7 @@ function HomePage() {
             <li><Link to="/">Home</Link></li>
             <li><Link to="/about">About Us</Link></li>
             <li><Link to="/solution">Solution</Link></li>
+            <li><Link to="/trade">Trade</Link></li>
             <li><Link to="/contact">Contact</Link></li>
           </ul>
         </nav>

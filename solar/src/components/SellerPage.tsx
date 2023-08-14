@@ -42,6 +42,7 @@ const SellerPage: React.FC<SellerPageProps> = ({ onPublish }) => {
           </div>
         </div>
       );
+}
       
    
 

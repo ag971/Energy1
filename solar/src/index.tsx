@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Scrypt, bsv } from 'scrypt-ts';
+
 import { EnergyTradingEscrow } from './contracts/energy';
 import  artifacts from '../artifacts/energy.json'
 
