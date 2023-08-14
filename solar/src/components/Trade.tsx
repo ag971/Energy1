@@ -1,27 +1,30 @@
 
 import { useState } from 'react';
-import { toByteString, hash160, bsv, TestWallet, DefaultProvider } from 'scrypt-ts';
+import { toByteString, hash160, bsv, TestWallet, DefaultProvider, ScryptProvider, SensiletSigner, findSig, MethodCallOptions, PubKey, StatefulNext } from 'scrypt-ts';
 import { EnergyTradingEscrow } from '../contracts/energy';
 
 
 function Trade() {
 
+    // TODO: Make these collections, since you can deploy multiple escrows within the app?
     const [contract, setContract] = useState<EnergyTradingEscrow | null>(null);
-    const [buyerPubKey, setBuyerPubKey] = useState<string>('');
-    const [buyerSig, setBuyerSig] = useState<string>('');
+    const [buyerPubKey, setBuyerPubKey] = useState<bsv.PublicKey| null>(null);
     const [energyAmount, setEnergyAmount] = useState<bigint>(0n);
-    const [sellerSig, setSellerSig] = useState<string>('');
-    const [sellerPubKey, setSellerPubKey] = useState<string>('');
-
+    const [sellerPubKey, setSellerPubKey] = useState<bsv.PublicKey| null>(null);
+    
     const deployContract = async () => {
-        // Similar code to your deploy.ts script
-        const privateKey = bsv.PrivateKey.fromWIF('cTNwuNVg2u24VpnY1STSuHtH8qvnGYXoygVtyGT6FUfXUgpNR4tk');
-        const signer = new TestWallet(privateKey, new DefaultProvider({ network: bsv.Networks.testnet }));
+        const provider = new ScryptProvider();
+        const signer = new SensiletSigner(provider);
+        
+        // Just use same sensilet key for now while testing.
+        const seller = await signer.getDefaultPubKey()
+        const buyer = await signer.getDefaultPubKey()
+        
+        setSellerPubKey(seller)
+        setBuyerPubKey(buyer)
 
-        await EnergyTradingEscrow.compile();
-
-        const sellerPubKeyHash = hash160(toByteString('seller public key', true));
-        const buyerPubKeyHash = hash160(toByteString('buyer public key', true));
+        const sellerPubKeyHash = hash160(seller.toHex());
+        const buyerPubKeyHash = hash160(buyer.toHex());
         const unitPrice = 1n;
 
         const instance = new EnergyTradingEscrow(sellerPubKeyHash, buyerPubKeyHash, unitPrice);
@@ -35,17 +38,17 @@ function Trade() {
 
     const buyEnergy = async () => {
         try {
-            // Check if the contract instance exists
-            if (!contract) {
-                console.error('Contract instance is not available.');
-                return;
-            }
+            //// Check if the contract instance exists
+            //if (!contract) {
+            //    console.error('Contract instance is not available.');
+            //    return;
+            //}
 
-            // Ensure buyerPubKey and buyerSig are not empty
-            if (!buyerPubKey || !buyerSig) {
-                console.error('Buyer public key and signature are required.');
-                return;
-            }
+            //// Ensure buyerPubKey and buyerSig are not empty
+            //if (!buyerPubKey || !buyerSig) {
+            //    console.error('Buyer public key and signature are required.');
+            //    return;
+            //}
 
             //// Perform the buyEnergy method call
             //const result = await contract.methods.buyEnergy(
@@ -67,39 +70,46 @@ function Trade() {
                 console.error('Contract instance is not available.');
                 return;
             }
-
-            // Ensure sellerPubKey and sellerSig are not empty
-            if (!sellerPubKey || !sellerSig) {
-                console.error('Seller public key and signature are required.');
+            
+            if (!sellerPubKey) {
+                console.error('Seller pub key is not yet available.');
                 return;
             }
+            
+            console.log(energyAmount)
+            
+            // Construct next instance of the smart contract.
+            const next = contract.next()
+            next.energy += energyAmount
+            
+            const result = await contract.methods.depositEnergy(
+                (sigResps) => findSig(sigResps, sellerPubKey),
+                PubKey(sellerPubKey.toHex()),
+                energyAmount,
+                {
+                    pubKeyOrAddrToSign: sellerPubKey,
+                    next: {
+                        instance: next,
+                        balance: contract.balance
+                    }
+                } as MethodCallOptions<EnergyTradingEscrow>
+            ) 
 
-            //// Perform the depositEnergy method call
-            //const result = await contract.methods.depositEnergy(
-            //  toByteString(sellerSig || '', true),
-            //  toByteString(sellerPubKey || '', true),
-            //  energyAmount,
-            //  { //what can be additional options? }
-            //);
-
-            //console.log('Deposit energy result:', result);
+            console.log('Deposit energy call txid:', result.tx.id);
         } catch (error) {
             console.error('Error depositing energy:', error);
         }
     };
     // Similar functions for other interactions with the contract (refund, etc.)
 
+    // TODO: Display data of deployed escrow(s)?
     return (
         <div>
             <button onClick={deployContract}>Deploy Contract</button>
             <div>
-                <input type="text" placeholder="Buyer Public Key" value={buyerPubKey} onChange={(e) => setBuyerPubKey(e.target.value)} />
-                <input type="text" placeholder="Buyer Signature" value={buyerSig} onChange={(e) => setBuyerSig(e.target.value)} />
                 <button onClick={buyEnergy}>Buy Energy</button>
             </div>
             <div>
-                <input type="text" placeholder="Seller Public Key" value={sellerPubKey} onChange={(e) => setSellerPubKey(e.target.value)} />
-                <input type="text" placeholder="Seller Signature" value={sellerSig} onChange={(e) => setSellerSig(e.target.value)} />
                 <input type="number" placeholder="Energy Amount" value={energyAmount.toString()} onChange={(e) => setEnergyAmount(BigInt(e.target.value))} />
                 <button onClick={depositEnergy}>Deposit Energy</button>
             </div>
