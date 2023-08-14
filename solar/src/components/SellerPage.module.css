@@ -1,0 +1,52 @@
+.feature-item {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0px 20px 30px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    margin: auto;
+  }
+  
+  .feature-item h2 {
+    color: #360033;
+    font-size: 2em;
+    margin: 20px 0;
+    font-weight: 700;
+    text-align: center;
+  }
+  
+  .feature-item label {
+    color: #333;
+    font-size: 1.2em;
+    font-weight: 600;
+    display: block;
+    margin: 10px 0;
+  }
+  
+  .feature-item input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+  
+  .feature-item button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    margin-top: 20px;
+    color: #ffffff;
+    background: linear-gradient(to right, #360033, #0b8793);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    display: block;
+    margin: auto;
+    transition: transform 0.2s;
+    font-weight: 800;
+  }
+  
+  .feature-item button:hover {
+    transform: scale(1.1);
+  }
+  

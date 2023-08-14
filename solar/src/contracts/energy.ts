@@ -24,6 +24,7 @@ export class EnergyTradingEscrow extends SmartContract {
 
     @prop()
     unitPrice: bigint
+  static contractApi: any
 
     constructor(
         seller: PubKeyHash,
