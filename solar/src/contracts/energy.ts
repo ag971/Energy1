@@ -1,4 +1,4 @@
-import {
+ import {
     assert,
     hash160,
     hash256,
@@ -71,7 +71,7 @@ export class EnergyTradingEscrow extends SmartContract {
         assert(hash256(outputs) == this.ctx.hashOutputs)
     }
 
-    @method()
+   /* @method()
     public refund(buyerPubKey: PubKey, buyerSig: Sig, energy: bigint) {
         assert(hash160(buyerPubKey) == this.buyer)
         assert(this.checkSig(buyerSig, buyerPubKey))
@@ -88,6 +88,6 @@ export class EnergyTradingEscrow extends SmartContract {
             outputs += this.buildChangeOutput()
         }
         assert(hash256(outputs) == this.ctx.hashOutputs)
-    }
+    }*/
 
-}
+}   

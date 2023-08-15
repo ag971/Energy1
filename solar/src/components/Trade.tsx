@@ -1,124 +1,106 @@
-
-import { useState } from 'react';
-import { toByteString, hash160, bsv, TestWallet, DefaultProvider, ScryptProvider, SensiletSigner, findSig, MethodCallOptions, PubKey, StatefulNext } from 'scrypt-ts';
+import React, { useState } from 'react';
 import { EnergyTradingEscrow } from '../contracts/energy';
-
+import { toByteString, hash160, bsv, ScryptProvider, SensiletSigner, PubKey, Sig, findSig, MethodCallOptions, Signer} from 'scrypt-ts';
 
 function Trade() {
-
-    // TODO: Make these collections, since you can deploy multiple escrows within the app?
     const [contract, setContract] = useState<EnergyTradingEscrow | null>(null);
-    const [buyerPubKey, setBuyerPubKey] = useState<bsv.PublicKey| null>(null);
     const [energyAmount, setEnergyAmount] = useState<bigint>(0n);
-    const [sellerPubKey, setSellerPubKey] = useState<bsv.PublicKey| null>(null);
-    
-    const deployContract = async () => {
+    const [energyPrice, setEnergyPrice] = useState<bigint>(0n);
+    const [availableEnergies, setAvailableEnergies] = useState<{ amount: bigint, price: bigint }[]>([]);
+    const [sellerPubKey, setSellerPubKey] = useState<bsv.PublicKey | null>(null);
+    const [buyerPubKey, setBuyerPubKey] = useState<bsv.PublicKey| null>(null);
+
+    const handleAddAndDeploy = async () => {
         const provider = new ScryptProvider();
         const signer = new SensiletSigner(provider);
-        
-        // Just use same sensilet key for now while testing.
-        const seller = await signer.getDefaultPubKey()
-        const buyer = await signer.getDefaultPubKey()
-        
-        setSellerPubKey(seller)
-        setBuyerPubKey(buyer)
 
-        const sellerPubKeyHash = hash160(seller.toHex());
-        const buyerPubKeyHash = hash160(buyer.toHex());
-        const unitPrice = 1n;
+        const seller = await signer.getDefaultPubKey();
+        setSellerPubKey(seller);
 
-        const instance = new EnergyTradingEscrow(sellerPubKeyHash, buyerPubKeyHash, unitPrice);
+        const buyer = await signer.getDefaultPubKey();  // Simulating buyer public key here
+
+        const instance = new EnergyTradingEscrow(hash160(seller.toHex()), hash160(buyer.toHex()), energyPrice);
         await instance.connect(signer);
 
         const deployTx = await instance.deploy();
         console.log(`EnergyTradingEscrow contract deployed: ${deployTx.id}`);
 
         setContract(instance);
+        setAvailableEnergies([...availableEnergies, { amount: energyAmount, price: energyPrice }]);
+        setEnergyAmount(0n);
+        setEnergyPrice(0n);
     };
 
-    const buyEnergy = async () => {
+    const handleBuyEnergy = async (energy) => {
         try {
-            //// Check if the contract instance exists
-            //if (!contract) {
-            //    console.error('Contract instance is not available.');
-            //    return;
-            //}
-
-            //// Ensure buyerPubKey and buyerSig are not empty
-            //if (!buyerPubKey || !buyerSig) {
-            //    console.error('Buyer public key and signature are required.');
-            //    return;
-            //}
-
-            //// Perform the buyEnergy method call
-            //const result = await contract.methods.buyEnergy(
-            //  toByteString(buyerPubKey || '', true),
-            //  toByteString(buyerSig || '', true),
-            //  { //what can be additional options? }
-            //);
-
-            //console.log('Buy energy result:', result);
-        } catch (error) {
-            console.error('Error buying energy:', error);
-        }
-    };
-
-    const depositEnergy = async () => {
-        try {
-            // Check if the contract instance exists
             if (!contract) {
                 console.error('Contract instance is not available.');
                 return;
             }
-            
-            if (!sellerPubKey) {
-                console.error('Seller pub key is not yet available.');
+    
+            if (!buyerPubKey) {
+                console.error('Buyer pub key is not yet available.');
                 return;
             }
-            
-            console.log(energyAmount)
-            
-            // Construct next instance of the smart contract.
-            const next = contract.next()
-            next.energy += energyAmount
-            
-            const result = await contract.methods.depositEnergy(
-                (sigResps) => findSig(sigResps, sellerPubKey),
-                PubKey(sellerPubKey.toHex()),
-                energyAmount,
+    
+            const provider = new ScryptProvider();
+            const signer = new SensiletSigner(provider);
+            const buyerSig = await signTx(buyerPubKey);
+    
+            const next = contract.next();
+            next.energy -= energy.amount;
+    
+            const result = await contract.methods.buyEnergy(
+                PubKey(buyerPubKey.toHex()),
+                buyerSig,
                 {
-                    pubKeyOrAddrToSign: sellerPubKey,
+                    pubKeyOrAddrToSign: buyerPubKey,
                     next: {
                         instance: next,
                         balance: contract.balance
                     }
                 } as MethodCallOptions<EnergyTradingEscrow>
-            ) 
-
-            console.log('Deposit energy call txid:', result.tx.id);
+            );
+    
+            console.log('Buy energy call txid:', result.tx.id);
+    
+            const newAvailableEnergies = availableEnergies.filter(e => e.amount !== energy.amount && e.price !== energy.price);
+            setAvailableEnergies(newAvailableEnergies);
+    
         } catch (error) {
-            console.error('Error depositing energy:', error);
+            console.error('Error buying energy:', error);
         }
     };
-    // Similar functions for other interactions with the contract (refund, etc.)
+    
+    
 
-    // TODO: Display data of deployed escrow(s)?
     return (
         <div>
-            <button onClick={deployContract}>Deploy Contract</button>
             <div>
-                <button onClick={buyEnergy}>Buy Energy</button>
+                <h3>Add Energy</h3>
+                <div>
+                    <input type="number" placeholder="Energy Amount" value={energyAmount.toString()} onChange={(e) => setEnergyAmount(BigInt(e.target.value))} />
+                    Energy Amount in kW
+                </div>
+                <div>
+                    <input type="number" placeholder="Energy Price" value={energyPrice.toString()} onChange={(e) => setEnergyPrice(BigInt(e.target.value))} />
+                    Energy Price in BSV
+                </div>
+                <button onClick={handleAddAndDeploy}>Sell Energy</button>
             </div>
             <div>
-                <input type="number" placeholder="Energy Amount" value={energyAmount.toString()} onChange={(e) => setEnergyAmount(BigInt(e.target.value))} />
-                <button onClick={depositEnergy}>Deposit Energy</button>
+                <h3>Available List of Energy</h3>
+                {availableEnergies.map((energy, index) => (
+                    <div key={index} style={{ border: "1px solid gray", padding: "10px", margin: "10px 0" }}>
+                        <strong>{index + 1}.</strong>
+                        <p>Energy: {energy.amount.toString()} kW</p>
+                        <p>Price: BSV{energy.price.toString()}</p>
+                        <button onClick={() => handleBuyEnergy(energy)}>Buy Energy</button>
+                    </div>
+                ))}
             </div>
-            {/* Other UI elements for refund and other interactions */}
         </div>
-    )
+    );
 }
-
-
-
 
 export default Trade;
