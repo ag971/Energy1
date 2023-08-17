@@ -26,7 +26,7 @@ async function main() {
     const seller = bsv.PrivateKey.fromWIF('cRq3Apr6LFJ4JpXUhSVY4zQP2pvi3UGZVuCRgs946xhM3mAmqRAP')
     const unitPrice = 5n
 
-    // TODO: Adjust the amount of satoshis locked in the smart contract:
+    
     const amount = 10
 
     const instance = new EnergyTradingEscrow(
