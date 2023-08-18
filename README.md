@@ -1,16 +1,26 @@
 # SolarBitTrade
 
-# Table of Content
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Contract Features](#contract-features)
+3. [Frontend Interaction](#frontend-interaction)
+4. [Quick Start](#quick-start)
+   - [Clone the Repository](#1-clone-the-repository)
+   - [Redirect to the Correct Directory](#2-redirect-to-the-correct-directory)
+   - [Install Dependencies](#3-install-dependencies)
+   - [Compile Contract](#4-compile-contract)
+   - [Load Artifact](#5-load-artifact)
+   - [Deploy Contract](#6-deploy-contract)
+   - [Run the Frontend App](#7-run-the-frontend-app)
 
 
+## Overview
 
-
-
-
-# Overview
 The EnergyTrading is a smart contract designed to handle the trading of energy between a buyer and a seller. It provides a way for the seller to deposit energy into the contract and for the buyer to buy the deposited energy. The trading mechanism ensures that the buyer pays the correct amount for the energy they wish to purchase. The contract leverages the power of the scrypt-ts library, which is a TypeScript binding for the sCrypt language, providing efficient ways to handle Bitcoin SV smart contract operations.
 
-# Contract Features
+## Contract Features
+
 1.Seller and Buyer Identification:
 The contract tracks the Bitcoin SV public key hashes of both the seller and buyer to ensure that only authorized parties can interact with it.
 
@@ -23,6 +33,7 @@ Transactions are secured by checking signatures against public key hashes and en
 4.Energy Buying Transaction Builder:
 The contract provides a static transaction builder function (buyTxBuilder) which builds the transaction for buying energy.
 
+
 # Frontend Interaction
 The frontend component, named Trade, allows users to:
 
@@ -34,12 +45,12 @@ The frontend component, named Trade, allows users to:
 
 The frontend leverages the scrypt-ts library for interaction with the contract. Specifically, it utilizes the SensiletSigner to handle signature-related operations, enabling seamless integration with wallets that support this signer.
 
-# Quick Start
+## Quick Start
 
 ## 1. Clone the repository: 
 `git clone https://github.com/yourusername/project-name.git` 
 
-## 2.Redirect to the correct directory:
+## 2. Redirect to the correct directory:
 Before running the project, redirect to the right directory of the project by running
  ```sh  
 cd solar
@@ -87,22 +98,15 @@ Runs the app in the development mode. Open http://localhost:3000 to view it in t
 ```sh
 npm start
 ```
+## Note
+Ensure you have set up a proper wallet backend and connected to a Bitcoin SV node when deploying and interacting with the contract on the mainnet or testnet.
 
+## Future Enhancements
+Implement a feature to allow changing the unit price.
 
-## Build
+Incorporate a refund mechanism for the buyer and seller.
 
-```sh
-npm run build
-```
+Improve UI/UX for better user experience and clarity.
 
-## Testing Locally
-
-```sh
-npm run test
-```
-
-## Run Bitcoin Testnet Tests
-
-```sh
-npm run testnet
-```
+## Contribute
+Feel free to contribute to this project by opening issues or submitting pull requests. All contributions are welcomed!
